@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Vianda {
+  id           Int             @id @default(autoincrement())
+  nombre       String
+  tipo         Tipo
+  descripcion  String
+  ingredientes String
+  imagen       String
+  precio       Decimal?        @db.Decimal(10, 2)
+  stock        Int
+  estado       Boolean         @default(true)
+  lunes        Boolean         @default(false)
+  martes       Boolean         @default(false)
+  miercoles    Boolean         @default(false)
+  jueves       Boolean         @default(false)
+  viernes      Boolean         @default(false)
+  sabado       Boolean         @default(false)
+  domingo      Boolean         @default(false)
+  pedidos      DetallePedido[]
+}
+
+enum Tipo {
+  clasico
+  sinHarinas
+  vegetariano
+  dieta
+}
+
+model Usuario {
+  id             Int      @id @default(autoincrement())
+  rol            Rol      @default(cliente)
+  nombreCompleto String
+  telefono       String
+  email          String   @unique
+  dni            String   @unique
+  password       String
+  direccion      String
+  activo         Boolean  @default(true)
+  pedidos        Pedido[] @relation("UsuarioPedidos")
+  carrito        String?  @default("[]")
+}
+
+enum Rol {
+  cliente
+  repartidor
+  cocina
+  administrador
+}
+
+model Pedido {
+  id            Int             @id @default(autoincrement())
+  fk_usuarioId  Int
+  usuario       Usuario         @relation("UsuarioPedidos", fields: [fk_usuarioId], references: [id])
+  totalVenta    Decimal         @db.Decimal(10, 2)
+  metodoPago    String
+  estado        Estado
+  idTransaccion Int             @default(autoincrement())
+  fecha         DateTime
+  detallePedido DetallePedido[]
+}
+
+enum Estado {
+  pendiente
+  pagado
+  despachado
+  entregado
+}
+
+model DetallePedido {
+  pedido       Pedido  @relation(fields: [pedidoId], references: [id])
+  pedidoId     Int
+  vianda       Vianda  @relation(fields: [viandaId], references: [id])
+  viandaId     Int
+  viandaNombre String?
+  viandaImagen String
+  cantidad     Int
+  precio       Decimal @db.Decimal(10, 2)
+  total        Decimal @db.Decimal(10, 2)
+
+  @@id([pedidoId, viandaId])
+}
